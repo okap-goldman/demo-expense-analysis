@@ -1,7 +1,5 @@
-import React from 'react'
 import { CategoryPieChart } from './components/charts/CategoryPieChart'
 import { TimeSeriesChart } from './components/charts/TimeSeriesChart'
-import { MonthlyBarChart } from './components/charts/MonthlyBarChart'
 
 // サンプルデータ
 const sampleCategoryData = [
@@ -20,32 +18,6 @@ const sampleTimeSeriesData = [
   { date: new Date('2024-01-05'), expenses: 35000, income: 0, netAmount: -35000 }
 ];
 
-const sampleMonthlyData = [
-  { 
-    yearMonth: '2024-01', 
-    expenses: 340000, 
-    income: 450000, 
-    transactionCount: 120, 
-    monthlyChange: 5.2,
-    categoryBreakdown: { food: 120000, transportation: 80000, utilities: 60000, other: 80000 } as any
-  },
-  { 
-    yearMonth: '2024-02', 
-    expenses: 320000, 
-    income: 450000, 
-    transactionCount: 110, 
-    monthlyChange: -5.9,
-    categoryBreakdown: { food: 110000, transportation: 75000, utilities: 65000, other: 70000 } as any
-  },
-  { 
-    yearMonth: '2024-03', 
-    expenses: 380000, 
-    income: 450000, 
-    transactionCount: 135, 
-    monthlyChange: 18.8,
-    categoryBreakdown: { food: 130000, transportation: 90000, utilities: 70000, other: 90000 } as any
-  }
-];
 
 function App() {
   return (
@@ -73,11 +45,6 @@ function App() {
             <TimeSeriesChart timeSeriesData={sampleTimeSeriesData} />
           </section>
 
-          {/* 月別棒グラフ */}
-          <section className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4">月別収支</h2>
-            <MonthlyBarChart monthlyData={sampleMonthlyData} targetAmount={350000} />
-          </section>
         </div>
       </div>
     </div>
