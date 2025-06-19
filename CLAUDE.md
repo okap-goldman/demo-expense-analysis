@@ -20,7 +20,18 @@ npm run lint
 
 # プロダクションビルドのプレビュー
 npm run preview
+
+# ログの閲覧
+npm run log
+
+# 型チェック
+npm run typecheck
+
+# データベース操作
+
 ```
+
+
 
 ## アーキテクチャ
 
@@ -88,11 +99,27 @@ src/
 - 全ての金額は日本円の慣例に従って一貫してフォーマット
 - OCR処理では画像前処理により文字認識精度を向上
 
+## ドキュメント
+
+### 設計ドキュメント
+- [システムアーキテクチャ](docs/system_architecture.md) - システム全体の設計と構成
+- [アーキテクチャ概要](docs/arch.md) - プロジェクトアーキテクチャの詳細説明
+- [要件定義](docs/requirements.yaml) - プロジェクト要件の詳細
+- [更新された要件](docs/updated_requirements.yaml) - 最新の要件定義
+- [ユースケースシーケンス](docs/use_case_sequences.md) - ユースケースフローの詳細
+
+### API仕様
+- [OpenAPI仕様](docs/openapi/api_specification.yaml) - REST API の詳細仕様
+
+### セットアップガイド
+- [Better Auth セットアップ](docs/better_auth_setup.md) - 認証システムのセットアップ手順
+
 ## Claude Code 通知ルール
 **必須**: あらゆるタスク完了時は必ず通知を送信してください。例外はありません。単純な情報提供の完了時も必ず通知してください。通知内容は実行したタスクに応じて適切に記述すること。
 
 ```bash
 osascript -e 'display notification "[作業内容]" with title "CC [ブランチ名]" sound name "Tink"'
+```
 
 **重要**: 通知内容は必ず具体的で分かりやすく記述すること
 
