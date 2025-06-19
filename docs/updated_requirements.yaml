@@ -1,0 +1,294 @@
+project_name: "銀行取引履歴分析ツール"
+project_description: "AIを活用して銀行の取引履歴を分析し、ユーザーの分析結果を保存・管理する家計管理Webアプリケーション"
+
+# プロジェクト概要
+overview:
+  purpose: "個人の銀行取引履歴をAIで分析し、支出の内訳と傾向を視覚化・保存して継続的な家計管理を支援するツール"
+  target_users: "個人利用者（継続的な家計管理を行いたい人）"
+  application_type: "フルスタックWebアプリケーション"
+  data_policy: "分析結果永続化 - ユーザー専用の分析履歴保存"
+
+# 機能要件
+functional_requirements:
+  core_features:
+    - name: "ユーザー認証機能"
+      description: "Better Authによる包括的な認証・認可システム"
+      priority: "高"
+      sub_features:
+        - "Google OAuth 2.0 ログイン"
+        - "メールアドレス＋パスワード認証"
+        - "セッション管理とセキュリティ"
+        - "ユーザープロフィール管理"
+        
+    - name: "データアップロード機能"
+      description: "CSVファイルまたは銀行口座のスクリーンショット画像をアップロード"
+      priority: "高"
+      
+    - name: "AI分析機能"
+      description: "LLMを使用してアップロードされたデータを分析"
+      priority: "高"
+      sub_features:
+        - "CSV解析とデータ抽出"
+        - "画像OCR（文字認識）"
+        - "取引内容の自動分類"
+        - "支出パターンの分析"
+        - "AI洞察の生成"
+        
+    - name: "分析結果保存機能"
+      description: "ユーザーの分析結果をデータベースに永続化"
+      priority: "高"
+      sub_features:
+        - "分析結果の自動保存"
+        - "分析メタデータの管理"
+        - "分析結果の編集・削除"
+        
+    - name: "データ可視化機能"
+      description: "分析結果をインタラクティブなグラフで表示"
+      priority: "高"
+      sub_features:
+        - "支出パターン円グラフ"
+        - "月別支出推移グラフ"
+        - "統計サマリー表示"
+        - "比較分析機能"
+        
+    - name: "分析履歴管理機能"
+      description: "過去の分析結果の一覧・検索・比較"
+      priority: "高"
+      sub_features:
+        - "過去の分析一覧ページ"
+        - "分析結果の検索・フィルタリング"
+        - "複数分析の比較表示"
+        - "分析結果の編集・削除"
+        
+    - name: "レポート出力機能"
+      description: "分析結果のPDFダウンロード"
+      priority: "中"
+      sub_features:
+        - "グラフ付きPDFレポート生成"
+        - "複数分析の統合レポート"
+        - "カスタムレポート設定"
+
+# 非機能要件
+non_functional_requirements:
+  performance:
+    - "ファイルアップロード: 最大100MB"
+    - "レスポンス時間: 分析完了まで1分以内"
+    - "データベース: 高速クエリ実行"
+    
+  security:
+    - "Better Authによる認証・認可"
+    - "ユーザーデータの暗号化"
+    - "HTTPS通信の強制"
+    - "CSRFとXSS対策"
+    - "データアクセス権限の厳密な管理"
+    
+  usability:
+    - "直感的で分かりやすいUI"
+    - "レスポンシブデザイン対応"
+    - "ローディング状態の可視化"
+    - "エラーハンドリングとユーザーフィードバック"
+    - "分析履歴の効率的なナビゲーション"
+    
+  compatibility:
+    - "モダンブラウザ対応（Chrome, Firefox, Safari, Edge）"
+
+# 技術要件
+technical_requirements:
+  frontend:
+    framework: "Next.js 15"
+    language: "TypeScript"
+    styling: "Tailwind CSS + shadcn/ui"
+    chart_library: "Recharts"
+    auth_library: "Better Auth"
+    state_management: "Zustand"
+    
+  backend:
+    runtime: "Node.js"
+    framework: "Next.js API Routes"
+    database: "PostgreSQL (Supabase)"
+    auth_service: "Better Auth"
+    orm: "Drizzle ORM"
+    
+  ai_integration:
+    llm_provider: "OpenAI GPT-4o-mini"
+    ocr_service: "Tesseract.js"
+    
+  file_handling:
+    csv_parser: "Papa Parse"
+    image_processing: "Sharp"
+    pdf_generation: "jsPDF"
+    file_storage: "Supabase Storage"
+    
+  deployment:
+    hosting: "Vercel"
+    database_hosting: "Supabase"
+    api: "Vercel Serverless Functions"
+    cdn: "Vercel Edge Network"
+
+# データベース設計
+database_design:
+  tables:
+    users:
+      description: "ユーザー情報"
+      fields:
+        - "id: UUID (Primary Key)"
+        - "email: String (Unique)"
+        - "name: String"
+        - "avatar_url: String (Optional)"
+        - "google_id: String (Optional)"
+        - "created_at: Timestamp"
+        - "updated_at: Timestamp"
+        
+    analysis_sessions:
+      description: "分析セッション"
+      fields:
+        - "id: UUID (Primary Key)"
+        - "user_id: UUID (Foreign Key -> users.id)"
+        - "title: String"
+        - "description: String (Optional)"
+        - "file_name: String"
+        - "file_type: Enum (csv, image)"
+        - "status: Enum (processing, completed, failed)"
+        - "created_at: Timestamp"
+        - "updated_at: Timestamp"
+        
+    analysis_results:
+      description: "分析結果"
+      fields:
+        - "id: UUID (Primary Key)"
+        - "session_id: UUID (Foreign Key -> analysis_sessions.id)"
+        - "summary_data: JSONB (総計情報)"
+        - "category_breakdown: JSONB (カテゴリ別分析)"
+        - "time_series_data: JSONB (時系列データ)"
+        - "monthly_data: JSONB (月別データ)"
+        - "ai_insights: JSONB (AI洞察)"
+        - "chart_config: JSONB (チャート設定)"
+        - "created_at: Timestamp"
+        
+    transactions:
+      description: "取引データ"
+      fields:
+        - "id: UUID (Primary Key)"
+        - "session_id: UUID (Foreign Key -> analysis_sessions.id)"
+        - "date: Date"
+        - "description: String"
+        - "amount: Decimal"
+        - "category: String"
+        - "type: Enum (income, expense, transfer)"
+        - "balance: Decimal (Optional)"
+        - "is_auto_classified: Boolean"
+        - "is_excluded: Boolean"
+        - "created_at: Timestamp"
+        
+    user_preferences:
+      description: "ユーザー設定"
+      fields:
+        - "id: UUID (Primary Key)"
+        - "user_id: UUID (Foreign Key -> users.id)"
+        - "default_categories: JSONB"
+        - "chart_preferences: JSONB"
+        - "notification_settings: JSONB"
+        - "created_at: Timestamp"
+        - "updated_at: Timestamp"
+
+# ユーザーストーリー
+user_stories:
+  - as: "新規ユーザー"
+    want: "Better Authでアカウント作成・ログインする"
+    so_that: "分析結果を保存して継続的に管理できる"
+    acceptance_criteria:
+      - "Google OAuthまたはメール/パスワードでユーザー登録できる"
+      - "認証後、ダッシュボードに遷移する"
+      - "プロフィール情報を編集できる"
+    
+  - as: "ログイン済みユーザー"
+    want: "取引データをアップロードして分析する"
+    so_that: "支出パターンを理解し、分析結果を保存できる"
+    acceptance_criteria:
+      - "CSVまたは画像ファイルをアップロードできる"
+      - "分析処理の進捗を確認できる"
+      - "分析結果が自動的に保存される"
+    
+  - as: "継続利用ユーザー"
+    want: "過去の分析結果一覧を確認する"
+    so_that: "支出の変化や傾向を時系列で把握できる"
+    acceptance_criteria:
+      - "過去の分析セッション一覧を表示できる"
+      - "分析結果を検索・フィルタリングできる"
+      - "複数の分析結果を比較できる"
+      
+  - as: "データ管理ユーザー"
+    want: "保存された分析結果を編集・削除する"
+    so_that: "不要なデータを整理し、正確な情報を維持できる"
+    acceptance_criteria:
+      - "分析のタイトルや説明を編集できる"
+      - "不要な分析結果を削除できる"
+      - "削除前に確認ダイアログが表示される"
+
+# UI/UX フロー
+user_flow:
+  step1:
+    page: "ランディング/認証画面"
+    description: "Better Auth認証画面"
+    elements:
+      - "Google OAuthボタン"
+      - "メール/パスワードログインフォーム"
+      - "新規登録フォーム"
+      
+  step2:
+    page: "ダッシュボード"
+    description: "メインダッシュボード"
+    elements:
+      - "新しい分析開始ボタン"
+      - "最近の分析結果表示"
+      - "統計サマリー"
+      - "分析履歴へのリンク"
+      
+  step3:
+    page: "ファイルアップロード画面"
+    description: "分析用ファイルのアップロード"
+    elements:
+      - "ドラッグ&ドロップエリア"
+      - "分析設定オプション"
+      - "アップロード開始ボタン"
+      
+  step4:
+    page: "分析処理画面"
+    description: "AI分析処理中の進捗表示"
+    elements:
+      - "プログレスバー"
+      - "処理段階表示"
+      - "推定残り時間"
+      
+  step5:
+    page: "分析結果表示画面"
+    description: "完了した分析結果の表示"
+    elements:
+      - "インタラクティブなグラフ"
+      - "AI洞察表示"
+      - "保存確認メッセージ"
+      - "PDFダウンロードボタン"
+      
+  step6:
+    page: "分析履歴一覧画面"
+    description: "過去の分析結果一覧"
+    elements:
+      - "分析セッション一覧テーブル"
+      - "検索・フィルタリング機能"
+      - "比較選択チェックボックス"
+      - "削除・編集ボタン"
+
+# 制約事項
+constraints:
+  - "ユーザーは自分の分析結果のみアクセス可能"
+  - "分析データの共有機能は今回の実装範囲外"
+  - "大量データ処理時のパフォーマンス最適化が必要"
+  - "ファイルサイズ制限: 100MB以下"
+
+# 今後の拡張案
+future_enhancements:
+  - "分析結果の共有機能"
+  - "予算設定・達成度追跡機能"
+  - "リアルタイム通知機能"
+  - "モバイルアプリ対応"
+  - "API公開とサードパーティ連携"

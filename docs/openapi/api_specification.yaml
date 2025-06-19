@@ -1,0 +1,727 @@
+openapi: 3.0.3
+info:
+  title: 銀行取引履歴分析ツール API
+  description: |
+    AIを活用した銀行取引履歴の一時分析システム
+    - データ保存なし（完全ステートレス・メモリベース）
+    - 分析後即座にデータ削除
+    - NextAuth.js + Google OAuth 2.0 認証
+    - Next.js API Routes（Vercel Serverless Functions）
+  version: 1.0.0
+  contact:
+    name: API サポート
+    email: support@budget-wise-ai.com
+
+servers:
+  - url: https://budget-wise-ai.vercel.app/api
+    description: 本番環境（Vercel）
+  - url: http://localhost:3000/api
+    description: 開発環境
+
+security:
+  - nextAuthSession: []
+
+paths:
+  # Next.js API Routes による認証（NextAuth.js）
+  /auth/session:
+    get:
+      tags:
+        - 認証
+      summary: セッション情報取得
+      description: NextAuth.js による現在のセッション情報取得
+      operationId: getSession
+      security: []
+      responses:
+        '200':
+          description: セッション情報
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  expires:
+                    type: string
+                    format: date-time
+                    description: セッション有効期限
+        '401':
+          description: セッションなし
+
+  /auth/signin:
+    get:
+      tags:
+        - 認証
+      summary: Google OAuth ログイン
+      description: NextAuth.js Google プロバイダーによるログイン
+      operationId: signIn
+      security: []
+      responses:
+        '302':
+          description: Google OAuth リダイレクト
+
+  /auth/signout:
+    post:
+      tags:
+        - 認証
+      summary: ログアウト
+      description: |
+        NextAuth.js セッション終了とメモリクリーンアップ
+        - 一時データの完全削除
+        - セッション情報のクリア
+      operationId: signOut
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "ログアウトしました"
+
+  # ファイルアップロード（メモリベース）
+  /upload:
+    post:
+      tags:
+        - ファイル処理
+      summary: ファイルアップロード
+      description: |
+        CSV または画像ファイルの一時アップロード（メモリ保存）
+        - サポート形式: CSV, JPEG, PNG, PDF
+        - 最大サイズ: 100MB
+        - メモリ内一時保存のみ
+      operationId: uploadFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: アップロードファイル
+                file_type:
+                  type: string
+                  enum: [csv, image]
+                  description: ファイルタイプ
+              required:
+                - file
+                - file_type
+      responses:
+        '200':
+          description: アップロード成功（メモリ保存）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_upload_id:
+                    type: string
+                    description: セッション内アップロードID
+                  file_size:
+                    type: integer
+                    description: ファイルサイズ（バイト）
+                  file_type:
+                    type: string
+                    description: ファイルタイプ
+                  message:
+                    type: string
+                    example: "ファイルをメモリに保存しました"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: ファイルサイズが大きすぎます
+
+  # AI分析処理（メモリベース）
+  /analyze:
+    post:
+      tags:
+        - AI分析
+      summary: 取引履歴分析
+      description: |
+        メモリ内ファイルデータの AI 分析実行
+        - CSV: 直接データ分析
+        - 画像: OCR → データ分析
+        - 結果は一時的にメモリに保持
+      operationId: analyzeData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_upload_id:
+                  type: string
+                  description: セッション内アップロードID
+                analysis_options:
+                  type: object
+                  properties:
+                    date_range:
+                      type: object
+                      properties:
+                        start_date:
+                          type: string
+                          format: date
+                        end_date:
+                          type: string
+                          format: date
+                    categories:
+                      type: array
+                      items:
+                        type: string
+                      description: 分析対象カテゴリー
+              required:
+                - session_upload_id
+      responses:
+        '200':
+          description: 分析開始
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_analysis_id:
+                    type: string
+                    description: セッション内分析ID
+                  status:
+                    type: string
+                    enum: [processing, completed, failed]
+                  estimated_time:
+                    type: integer
+                    description: 推定完了時間（秒）
+                  message:
+                    type: string
+                    example: "分析を開始しました"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: アップロードIDが見つかりません
+
+  /analyze/{session_analysis_id}/status:
+    get:
+      tags:
+        - AI分析
+      summary: 分析状況確認
+      description: メモリ内分析処理の進行状況を確認
+      operationId: getAnalysisStatus
+      parameters:
+        - name: session_analysis_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: セッション内分析ID
+      responses:
+        '200':
+          description: 分析状況
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_analysis_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [processing, completed, failed]
+                  progress:
+                    type: object
+                    properties:
+                      current_step:
+                        type: string
+                        enum: [ocr, ai_analysis, data_processing, chart_generation]
+                      completed_steps:
+                        type: array
+                        items:
+                          type: string
+                      remaining_time:
+                        type: integer
+                        description: 残り時間（秒）
+                  error:
+                    type: string
+                    description: エラーメッセージ（失敗時）
+        '404':
+          description: 分析IDが見つかりません
+
+  /analyze/{session_analysis_id}/results:
+    get:
+      tags:
+        - AI分析
+      summary: 分析結果取得
+      description: |
+        完了した分析の結果を取得（メモリから）
+        - 支出パターン
+        - 統計情報
+        - Recharts用グラフデータ
+      operationId: getAnalysisResults
+      parameters:
+        - name: session_analysis_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: セッション内分析ID
+      responses:
+        '200':
+          description: 分析結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResults'
+        '404':
+          description: 分析IDが見つかりません
+        '409':
+          description: 分析未完了
+
+  # レポート生成（メモリベース）
+  /reports/generate:
+    post:
+      tags:
+        - レポート
+      summary: PDFレポート生成
+      description: |
+        メモリ内分析結果からPDFレポートを生成
+        - jsPDFによるレポート生成
+        - Rechartsグラフ埋め込み
+        - 一時メモリ保存のみ
+      operationId: generateReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_analysis_id:
+                  type: string
+                  description: セッション内分析ID
+                report_options:
+                  type: object
+                  properties:
+                    include_charts:
+                      type: boolean
+                      default: true
+                    include_summary:
+                      type: boolean
+                      default: true
+                    date_format:
+                      type: string
+                      enum: [YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY]
+                      default: YYYY-MM-DD
+              required:
+                - session_analysis_id
+      responses:
+        '200':
+          description: レポート生成開始
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_report_id:
+                    type: string
+                    description: セッション内レポートID
+                  status:
+                    type: string
+                    enum: [generating, ready, failed]
+                  estimated_time:
+                    type: integer
+                    description: 推定完了時間（秒）
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: 分析IDが見つかりません
+
+  /reports/{session_report_id}/download:
+    get:
+      tags:
+        - レポート
+      summary: PDFダウンロード
+      description: |
+        メモリ内生成PDFレポートをダウンロード
+        - ダウンロード後、メモリから即座削除
+      operationId: downloadReport
+      parameters:
+        - name: session_report_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: セッション内レポートID
+      responses:
+        '200':
+          description: PDFファイル
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="analysis_report.pdf"
+            X-Data-Cleanup:
+              schema:
+                type: string
+                example: "completed"
+                description: データ削除完了フラグ
+        '404':
+          description: レポートIDが見つかりません
+        '410':
+          description: レポートは既に削除されました
+
+  # OCR処理（メモリベース）
+  /ocr/extract:
+    post:
+      tags:
+        - OCR
+      summary: テキスト抽出
+      description: |
+        メモリ内画像からのテキスト抽出（OCR）
+        - Google Cloud Vision API使用
+        - 結果はメモリ内一時保存
+      operationId: extractText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_upload_id:
+                  type: string
+                  description: セッション内アップロードID
+                ocr_options:
+                  type: object
+                  properties:
+                    language:
+                      type: string
+                      default: ja
+                      description: OCR言語設定
+                    enhance_quality:
+                      type: boolean
+                      default: true
+                      description: 画質向上処理
+              required:
+                - session_upload_id
+      responses:
+        '200':
+          description: テキスト抽出結果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_ocr_id:
+                    type: string
+                  extracted_text:
+                    type: string
+                    description: 抽出されたテキスト
+                  confidence:
+                    type: number
+                    format: float
+                    description: 信頼度（0-1）
+                  structured_data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransactionData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: アップロードIDが見つかりません
+
+  # セッション管理（メモリベース）
+  /session/cleanup:
+    post:
+      tags:
+        - セッション
+      summary: セッションクリーンアップ
+      description: |
+        現在のセッションの手動クリーンアップ
+        - 一時データの削除
+        - アクティブな処理のキャンセル
+        - メモリ解放
+      operationId: cleanupSession
+      responses:
+        '200':
+          description: クリーンアップ完了
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "セッションをクリーンアップしました"
+                  cleaned_items:
+                    type: object
+                    properties:
+                      uploads:
+                        type: integer
+                      analyses:
+                        type: integer
+                      reports:
+                        type: integer
+                      memory_freed:
+                        type: string
+                        example: "XX MB"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ヘルスチェック
+  /health:
+    get:
+      tags:
+        - システム
+      summary: ヘルスチェック
+      description: Next.js API Routes + Vercel Functions の稼働状況確認
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: 正常稼働
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  services:
+                    type: object
+                    properties:
+                      nextauth_service:
+                        type: string
+                        enum: [available, unavailable]
+                      ai_service:
+                        type: string
+                        enum: [available, unavailable]
+                      ocr_service:
+                        type: string
+                        enum: [available, unavailable]
+                  environment:
+                    type: string
+                    enum: [development, production]
+                  platform:
+                    type: string
+                    example: "vercel"
+
+components:
+  securitySchemes:
+    nextAuthSession:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: NextAuth.js セッションクッキー
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ユーザーID
+        email:
+          type: string
+          format: email
+          description: Google アカウントメールアドレス
+        name:
+          type: string
+          description: 表示名
+        image:
+          type: string
+          format: uri
+          description: Googleプロフィール画像URL
+        google_id:
+          type: string
+          description: Google ID
+
+    TransactionData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: 取引日
+        description:
+          type: string
+          description: 取引内容
+        amount:
+          type: number
+          format: float
+          description: 金額
+        balance:
+          type: number
+          format: float
+          description: 残高（任意）
+        category:
+          type: string
+          description: カテゴリー（AI分析結果）
+        merchant:
+          type: string
+          description: 取引先（任意）
+
+    AnalysisResults:
+      type: object
+      properties:
+        session_analysis_id:
+          type: string
+        summary:
+          type: object
+          properties:
+            total_transactions:
+              type: integer
+              description: 総取引数
+            total_amount:
+              type: number
+              format: float
+              description: 総金額
+            average_amount:
+              type: number
+              format: float
+              description: 平均金額
+            date_range:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+        spending_patterns:
+          type: object
+          properties:
+            by_category:
+              type: array
+              items:
+                type: object
+                properties:
+                  category:
+                    type: string
+                  amount:
+                    type: number
+                    format: float
+                  percentage:
+                    type: number
+                    format: float
+                  transaction_count:
+                    type: integer
+            by_month:
+              type: array
+              items:
+                type: object
+                properties:
+                  month:
+                    type: string
+                    format: YYYY-MM
+                  amount:
+                    type: number
+                    format: float
+                  transaction_count:
+                    type: integer
+        recharts_data:
+          type: object
+          description: Recharts用に最適化されたグラフデータ
+          properties:
+            pie_chart_data:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: number
+                  fill:
+                    type: string
+                    description: カラーコード
+            line_chart_data:
+              type: array
+              items:
+                type: object
+                properties:
+                  month:
+                    type: string
+                  amount:
+                    type: number
+        ai_insights:
+          type: array
+          items:
+            type: string
+          description: OpenAI GPT-4 による分析インサイト
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+        details:
+          type: string
+          description: 詳細情報（任意）
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: 不正なリクエスト
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: 認証が必要です
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: リソースが見つかりません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: 認証
+    description: NextAuth.js + Google OAuth 2.0 認証
+  - name: ファイル処理
+    description: メモリベース ファイルアップロードと前処理
+  - name: AI分析
+    description: 取引履歴のOpenAI GPT-4分析
+  - name: OCR
+    description: Google Cloud Vision API による画像テキスト抽出
+  - name: レポート
+    description: jsPDF レポート生成とダウンロード
+  - name: セッション
+    description: メモリベース セッション管理とクリーンアップ
+  - name: システム
+    description: システム管理と監視 

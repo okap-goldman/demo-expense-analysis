@@ -1,0 +1,510 @@
+src:
+  structure.yaml:
+    content: |-
+      銀行取引履歴AI分析ツール - 個人の家計管理支援シングルページアプリケーション
+      
+      **プロジェクト概要:**
+      個人の銀行取引履歴をCSVファイルまたはスクリーンショット画像で読み込み、
+      LLMによる自動分析を行い、支出パターンや分類をグラフで可視化するWebアプリケーション。
+      React TypeScriptベースのシングルページアプリケーションとして実装。
+      
+      **主要機能:**
+      1. ファイル入力機能（CSV・画像対応）
+      2. 画像OCR処理による取引データ抽出
+      3. LLMによる取引データ分析・カテゴリ分類
+      4. インタラクティブなグラフ・チャート可視化
+      5. 支出サマリーと分析結果の表示
+      6. レスポンシブデザイン
+      
+      **技術スタック:**
+      - フロントエンド: React 18 + TypeScript + Vite
+      - スタイリング: Tailwind CSS + shadcn/ui
+      - グラフライブラリ: Recharts
+      - ファイル処理: react-dropzone
+      - 状態管理: React Hooks (useState, useEffect)
+      - API通信: fetch API
+      
+      **データフロー:**
+      入力（CSV/画像） → OCR処理 → LLM分析 → データ構造化 → グラフ描画 → 結果表示
+      
+      ref: "3次元リサージュ曲線によるカメラワークシミュレータ Ver.2 - vz7a-kwkm: 単一tsxファイルでの複雑なReactアプリケーション実装の参考として"
+    agent選定理由: gemini-2.0-flash-thinking-exp-1219は思考実験に特化した高速な推論と軽量な処理が得意で、プロジェクト全体の構造設計に最適です。
+    dependency: []
+    agent: "gemini-2.0-flash-thinking-exp-1219"
+    api: []
+    
+  components:
+    BankAnalyzer.tsx:
+      content: |-
+        銀行取引履歴分析ツールのメインコンポーネント
+        
+        **機能概要:**
+        - ファイルアップロード（CSV・画像）のドラッグ&ドロップ対応
+        - アップロードファイルの形式検証と前処理
+        - 分析進行状況の表示
+        - 分析結果の統合表示とナビゲーション
+        - エラーハンドリングとユーザーフィードバック
+        
+        **実装詳細:**
+        - react-dropzoneによるファイルアップロード機能
+        - ファイル形式に応じた処理分岐（CSV → 直接解析、画像 → OCR処理）
+        - 分析状態管理（アップロード中、OCR処理中、LLM分析中、完了）
+        - レスポンシブなレイアウト設計
+        - shadcn/uiコンポーネントによる統一されたデザイン
+        
+        **状態管理:**
+        - ファイル情報、分析状態、エラー状態、分析結果データ
+        - ローディング状態とプログレス表示
+        - 分析完了後の結果データ保持
+        
+        **UI要素:**
+        - ヘッダー（タイトル・説明）
+        - ファイルアップロードエリア
+        - 分析進行状況表示
+        - 結果表示エリア（条件付きレンダリング）
+        - エラーメッセージ表示
+      agent選定理由: claude-3-5-sonnet-20241022はReactとTypeScriptでの複雑なUI実装に優れており、ファイル処理やstate管理の実装に最適です。
+      dependency: 
+        - src/components/FileUploader.tsx
+        - src/components/AnalysisProgress.tsx
+        - src/components/ResultsDashboard.tsx
+        - src/utils/fileProcessor.ts
+        - src/utils/llmAnalyzer.ts
+      agent: "claude-3-5-sonnet-20241022"
+      api: []
+      
+    FileUploader.tsx:
+      content: |-
+        ファイルアップロード機能コンポーネント
+        
+        **機能詳細:**
+        - CSV・画像ファイルのドラッグ&ドロップ対応
+        - ファイル形式制限（.csv, .png, .jpg, .jpeg）とサイズ制限
+        - プレビュー表示機能
+        - ファイル削除・再選択機能
+        - アップロード状態の視覚化
+        
+        **バリデーション:**
+        - サポートファイル形式チェック
+        - ファイルサイズ制限（10MB以下）
+        - MIME typeの検証
+        - 画像ファイルの場合は読み込み可能性チェック
+        
+        **UI要素:**
+        - ドラッグ&ドロップエリア（破線ボーダー、ホバー効果）
+        - ファイル選択ボタン
+        - アップロード済みファイルリスト
+        - プレビュー画像表示
+        - プログレスバー
+        - エラーメッセージ表示
+        
+        **props:**
+        - onFileUpload: ファイルアップロード完了コールバック
+        - isUploading: アップロード中フラグ
+        - allowedTypes: 許可ファイル形式配列
+        - maxSize: 最大ファイルサイズ
+      agent選定理由: claude-3-5-haiku-20241022は軽量なUIコンポーネントの実装に特化しており、ファイルアップロード機能の実装に適しています。
+      dependency: []
+      agent: "claude-3-5-haiku-20241022"
+      api: []
+      
+    AnalysisProgress.tsx:
+      content: |-
+        分析進行状況表示コンポーネント
+        
+        **表示内容:**
+        - 分析ステップの進行状況（ステップバー）
+        - 現在実行中の処理内容
+        - 各ステップの完了状態表示
+        - 処理時間の表示
+        - キャンセル機能（オプション）
+        
+        **分析ステップ:**
+        1. ファイル読み込み・前処理
+        2. OCR処理（画像の場合）
+        3. データ抽出・構造化
+        4. LLM分析・カテゴリ分類
+        5. グラフデータ生成
+        6. 結果表示準備
+        
+        **UI要素:**
+        - プログレスバー（0-100%）
+        - ステップインジケーター
+        - 現在の処理内容テキスト
+        - 経過時間表示
+        - スピナーアニメーション
+        - エラー時の再試行ボタン
+        
+        **props:**
+        - currentStep: 現在のステップ番号
+        - totalSteps: 総ステップ数
+        - stepDescription: 現在の処理内容
+        - progress: 進行率（0-100）
+        - onCancel: キャンセル処理コールバック
+      agent選定理由: claude-3-5-haiku-20241022は簡潔で高速な処理に特化しており、プログレス表示の実装に最適です。
+      dependency: []
+      agent: "claude-3-5-haiku-20241022"
+      api: []
+      
+    ResultsDashboard.tsx:
+      content: |-
+        分析結果表示ダッシュボードコンポーネント
+        
+        **表示セクション:**
+        1. サマリーカード（総支出、主要カテゴリ、期間情報）
+        2. カテゴリ別支出円グラフ
+        3. 時系列支出推移グラフ
+        4. 月別支出棒グラフ
+        5. 高額取引一覧テーブル
+        6. 支出パターン分析結果
+        
+        **グラフ機能:**
+        - インタラクティブな操作（ズーム、ホバー詳細表示）
+        - カテゴリフィルタリング
+        - 期間指定機能
+        - データエクスポート機能
+        - グラフ種類切り替え
+        
+        **データ表示:**
+        - レスポンシブなグリッドレイアウト
+        - カードベースの情報表示
+        - カラーコーディングによるカテゴリ識別
+        - 通貨フォーマット表示
+        - 前月比較表示
+        
+        **props:**
+        - analysisData: 分析結果データ
+        - transactions: 取引履歴配列
+        - categories: カテゴリ情報
+        - dateRange: 分析対象期間
+        - onExport: データエクスポート処理
+      agent選定理由: claude-3-5-sonnet-20241022は複雑なデータ可視化とダッシュボード実装に強く、Rechartsを使ったグラフ実装に最適です。
+      dependency:
+        - src/components/charts/CategoryPieChart.tsx
+        - src/components/charts/TimeSeriesChart.tsx
+        - src/components/charts/MonthlyBarChart.tsx
+        - src/components/SummaryCards.tsx
+        - src/components/TransactionTable.tsx
+      agent: "claude-3-5-sonnet-20241022"
+      api: []
+      
+    charts:
+      CategoryPieChart.tsx:
+        content: |-
+          カテゴリ別支出円グラフコンポーネント
+          
+          **表示機能:**
+          - Rechartsを使用した円グラフ
+          - カテゴリ別の支出割合表示
+          - インタラクティブなセクター選択
+          - ホバー時の詳細情報表示
+          - 凡例表示とカラーコーディング
+          
+          **データ処理:**
+          - カテゴリ別支出額の集計
+          - 割合計算と表示
+          - 少額カテゴリの「その他」統合
+          - カラーパレットの自動割り当て
+          
+          **カスタマイズ:**
+          - グラフサイズの動的調整
+          - ツールチップカスタマイズ
+          - アニメーション効果
+          - フォントサイズ・色の調整
+          
+          **props:**
+          - data: カテゴリ別データ配列
+          - width: グラフ幅
+          - height: グラフ高さ
+          - colors: カラーパレット
+          - onCategoryClick: カテゴリクリック処理
+        agent選定理由: claude-3-5-haiku-20241022は軽量なグラフコンポーネントの実装に適しており、円グラフの実装に最適です。
+        dependency: []
+        agent: "claude-3-5-haiku-20241022"
+        api: []
+        
+      TimeSeriesChart.tsx:
+        content: |-
+          時系列支出推移グラフコンポーネント
+          
+          **表示機能:**
+          - Rechartsを使用した折れ線グラフ
+          - 日次・週次・月次の切り替え表示
+          - 複数カテゴリの同時表示
+          - ズーム・パン機能
+          - 期間選択機能
+          
+          **データ処理:**
+          - 時系列データの集計・平滑化
+          - 期間別グルーピング
+          - 移動平均の計算
+          - 欠損データの補間
+          
+          **インタラクション:**
+          - データポイントホバー詳細表示
+          - 凡例クリックでの系列表示切り替え
+          - ブラシ機能による期間選択
+          - グラフタイプ切り替え（折れ線・エリア）
+          
+          **props:**
+          - timeSeriesData: 時系列データ配列
+          - dateRange: 表示期間
+          - aggregationLevel: 集計単位（日・週・月）
+          - selectedCategories: 表示カテゴリ
+          - onRangeChange: 期間変更コールバック
+        agent選定理由: claude-3-5-sonnet-20241022は複雑な時系列データの可視化に優れており、インタラクティブなグラフ実装に最適です。
+        dependency: []
+        agent: "claude-3-5-sonnet-20241022"
+        api: []
+        
+      MonthlyBarChart.tsx:
+        content: |-
+          月別支出棒グラフコンポーネント
+          
+          **表示機能:**
+          - Rechartsを使用した棒グラフ
+          - 月別支出額の比較表示
+          - カテゴリ別スタック表示オプション
+          - 前年同月比較機能
+          - 目標値ライン表示
+          
+          **データ処理:**
+          - 月別データの集計
+          - カテゴリ別スタックデータ生成
+          - 前年比計算
+          - 平均値・中央値の算出
+          
+          **視覚化:**
+          - カテゴリ別カラーコーディング
+          - ホバー時の詳細情報
+          - 棒の高さアニメーション
+          - グリッドライン表示
+          
+          **props:**
+          - monthlyData: 月別データ配列
+          - isStacked: スタック表示フラグ
+          - showComparison: 前年比表示フラグ
+          - targetAmount: 目標支出額
+          - onMonthClick: 月クリック処理
+        agent選定理由: claude-3-5-haiku-20241022は棒グラフのような基本的な可視化コンポーネントの実装に効率的で適しています。
+        dependency: []
+        agent: "claude-3-5-haiku-20241022"
+        api: []
+        
+    SummaryCards.tsx:
+      content: |-
+        サマリー情報カード表示コンポーネント
+        
+        **表示カード:**
+        1. 総支出額カード（当月・前月比較）
+        2. 最大支出カテゴリカード
+        3. 取引件数カード
+        4. 平均取引額カード
+        5. 最高額取引カード
+        6. 予算達成率カード
+        
+        **カード機能:**
+        - 数値の視覚的な強調表示
+        - 前月比の増減表示（矢印・色分け）
+        - 進行度バーの表示
+        - アイコンによる分類表示
+        - クリックで詳細表示
+        
+        **レスポンシブ:**
+        - グリッドレイアウトの自動調整
+        - カードサイズの動的変更
+        - モバイル表示の最適化
+        - 横スクロール対応
+        
+        **props:**
+        - summaryData: サマリーデータ
+        - comparisonData: 比較データ
+        - budget: 予算情報
+        - onCardClick: カードクリック処理
+      agent選定理由: claude-3-5-haiku-20241022はカードベースのUIコンポーネント実装に効率的で、サマリー表示に適しています。
+      dependency: []
+      agent: "claude-3-5-haiku-20241022"
+      api: []
+      
+    TransactionTable.tsx:
+      content: |-
+        取引履歴テーブル表示コンポーネント
+        
+        **表示機能:**
+        - ページネーション対応の取引履歴テーブル
+        - ソート機能（日付・金額・カテゴリ）
+        - フィルタリング機能（期間・カテゴリ・金額範囲）
+        - 検索機能（摘要・店舗名）
+        - 選択行のハイライト表示
+        
+        **テーブル列:**
+        - 取引日
+        - 摘要・店舗名
+        - カテゴリ（自動分類結果）
+        - 支出額
+        - 残高（オプション）
+        - 編集ボタン
+        
+        **操作機能:**
+        - カテゴリの手動修正
+        - 取引の除外設定
+        - CSVエクスポート
+        - 複数選択での一括操作
+        - 詳細ビューモーダル
+        
+        **props:**
+        - transactions: 取引データ配列
+        - categories: カテゴリマスタ
+        - pageSize: 1ページあたりの表示件数
+        - onCategoryChange: カテゴリ変更処理
+        - onTransactionEdit: 取引編集処理
+      agent選定理由: claude-3-5-sonnet-20241022はテーブルコンポーネントの複雑な機能実装に優れており、ソート・フィルタ機能の実装に最適です。
+      dependency: []
+      agent: "claude-3-5-sonnet-20241022"
+      api: []
+      
+  utils:
+    fileProcessor.ts:
+      content: |-
+        ファイル処理ユーティリティ関数群
+        
+        **CSV処理機能:**
+        - CSVファイルの読み込みと解析
+        - 文字エンコーディングの自動判定（UTF-8, Shift_JIS）
+        - カラムマッピングの自動検出
+        - データ型変換（日付・金額）
+        - 銀行フォーマット別の対応
+        
+        **画像処理機能:**
+        - 画像ファイルの読み込みと前処理
+        - 画像品質の最適化
+        - OCR前処理（コントラスト調整・ノイズ除去）
+        - 複数ページPDFの処理
+        
+        **データ正規化:**
+        - 取引データの標準化
+        - 日付フォーマットの統一
+        - 金額の正負判定
+        - 重複取引の検出・除去
+        
+        **エクスポート機能:**
+        - 関数: parseCSVFile, processImageFile, normalizeTransactionData
+        - 型定義: Transaction, RawTransactionData, ProcessResult
+        - エラーハンドリング: FileProcessError
+      agent選定理由: gemini-2.0-flash-thinking-exp-1219はファイル処理の複雑なロジック実装に優れており、データ変換処理に最適です。
+      dependency: []
+      agent: "gemini-2.0-flash-thinking-exp-1219"
+      api: []
+      
+    llmAnalyzer.ts:
+      content: |-
+        LLM分析処理ユーティリティ関数群
+        
+        **OCR処理:**
+        - 画像からテキスト抽出（Tesseract.js使用）
+        - 銀行明細書の構造解析
+        - テーブル構造の認識
+        - 文字認識精度の向上処理
+        
+        **LLM分析機能:**
+        - 取引データのカテゴリ自動分類
+        - 摘要からの店舗・サービス識別
+        - 支出パターンの分析
+        - 異常取引の検出
+        - 家計改善提案の生成
+        
+        **カテゴリ分類:**
+        - 食費・日用品・交通費等の基本カテゴリ
+        - 店舗名・摘要からの推論
+        - 学習機能による精度向上
+        - ユーザーカスタマイズ対応
+        
+        **API統合:**
+        - OpenAI GPT-4o-miniとの連携
+        - プロンプトエンジニアリング
+        - レスポンス解析と構造化
+        - エラーハンドリングとリトライ機能
+        
+        **エクスポート機能:**
+        - 関数: performOCR, analyzeTransactions, categorizeTransaction
+        - 型定義: AnalysisResult, CategoryMapping, InsightData
+        - 設定: LLMConfig, OCROptions
+      agent選定理由: gemini-2.0-flash-thinking-exp-1219は高度な推論と分析処理に特化しており、LLMとの連携処理実装に最適です。
+      dependency: []
+      agent: "gemini-2.0-flash-thinking-exp-1219"
+      api: "gpt-4o-mini"
+      
+    dataFormatter.ts:
+      content: |-
+        データフォーマット変換ユーティリティ関数群
+        
+        **グラフデータ変換:**
+        - 取引データからグラフ用データ構造への変換
+        - 時系列データの集計・グルーピング
+        - カテゴリ別集計データの生成
+        - パーセンテージ計算
+        
+        **日付処理:**
+        - 日付範囲の計算
+        - 月別・週別・日別の集計
+        - 和暦・西暦の変換
+        - 営業日計算
+        
+        **通貨フォーマット:**
+        - 金額の表示フォーマット（カンマ区切り）
+        - 千円・万円単位の変換
+        - 正負の表現（収入・支出）
+        - 小数点処理
+        
+        **統計計算:**
+        - 平均・中央値・最頻値の算出
+        - 標準偏差・分散の計算
+        - 前月比・前年比の算出
+        - 移動平均の計算
+        
+        **エクスポート機能:**
+        - 関数: formatCurrency, aggregateByCategory, calculateTrends
+        - 型定義: ChartData, AggregationPeriod, StatisticsData
+        - 定数: DATE_FORMATS, CURRENCY_FORMATS
+      agent選定理由: gemini-2.0-flash-thinking-exp-1219はデータ変換と計算処理に優れており、統計的な分析機能の実装に適しています。
+      dependency: []
+      agent: "gemini-2.0-flash-thinking-exp-1219"
+      api: []
+      
+  types:
+    index.ts:
+      content: |-
+        TypeScript型定義ファイル
+        
+        **基本データ型:**
+        - Transaction: 取引データの型定義
+        - Category: カテゴリ情報の型定義
+        - AnalysisResult: 分析結果の型定義
+        - ChartData: グラフデータの型定義
+        
+        **インターフェース定義:**
+        - BankTransaction: 銀行取引の標準インターフェース
+        - AnalysisOptions: 分析オプションの設定
+        - FilterOptions: フィルタリング設定
+        - ExportOptions: エクスポート設定
+        
+        **列挙型定義:**
+        - TransactionType: 取引種別（収入・支出・振替）
+        - CategoryType: カテゴリ種別
+        - FileType: サポートファイル種別
+        - AnalysisStatus: 分析状態
+        
+        **ユーティリティ型:**
+        - Optional、Required、PartialExceptの型エイリアス
+        - API応答の型定義
+        - エラー型の定義
+        
+        **プロパティ詳細:**
+        - 全ての型にJSDocコメント付き
+        - 必須・オプションの明確な区別
+        - 型安全性の確保
+        - 拡張性を考慮した設計
+      agent選定理由: claude-3-5-sonnet-20241022はTypeScriptの型定義に精通しており、包括的な型システムの構築に最適です。
+      dependency: []
+      agent: "claude-3-5-sonnet-20241022"
+      api: []

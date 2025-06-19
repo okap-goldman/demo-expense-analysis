@@ -1,0 +1,230 @@
+project_name: "銀行取引履歴分析ツール"
+project_description: "AIを活用して銀行の取引履歴を一時的に分析し、支出パターンをその場でグラフ表示・PDF出力するシングルページアプリケーション"
+
+# プロジェクト概要
+overview:
+  purpose: "個人の銀行取引履歴をAIで一時分析し、支出の内訳と傾向をその場で視覚的に把握できるツール"
+  target_users: "個人利用者（家計管理を効率化したい人）"
+  application_type: "シングルページアプリケーション（SPA）"
+  data_policy: "データ保存なし - 分析後即座に削除"
+
+# 機能要件
+functional_requirements:
+  core_features:
+    - name: "ユーザー認証機能"
+      description: "Google OAuthによるシンプルなセッション管理のみ"
+      priority: "中"
+      sub_features:
+        - "Google OAuth 2.0ログイン"
+        - "一時セッション管理（メモリベース、データ保存なし）"
+        
+    - name: "データアップロード機能"
+      description: "CSVファイルまたは銀行口座のスクリーンショット画像をアップロード"
+      priority: "高"
+      
+    - name: "AI分析機能"
+      description: "LLMを使用してアップロードされたデータを一時分析"
+      priority: "高"
+      sub_features:
+        - "CSV解析とデータ抽出"
+        - "画像OCR（文字認識）"
+        - "取引内容の自動分析"
+        - "支出パターンの分析"
+        
+    - name: "データ可視化機能"
+      description: "分析結果をその場でグラフ表示"
+      priority: "高"
+      sub_features:
+        - "支出パターン円グラフ"
+        - "月別支出推移グラフ"
+        - "統計サマリー表示"
+        
+    - name: "レポート出力機能"
+      description: "分析結果の即座のPDFダウンロード"
+      priority: "高"
+      sub_features:
+        - "グラフ付きPDFレポート生成"
+        - "サマリー情報の含有"
+        - "ワンクリックダウンロード"
+        - "PDF生成後、データ即座削除"
+
+# 非機能要件
+non_functional_requirements:
+  performance:
+    - "ファイルアップロード: 最大100MB"
+    - "レスポンス時間: 分析完了まで1分以内"
+    
+  security:
+    - "アップロードされたファイルは処理後即座に削除"
+    - "分析データは一切保存しない"
+    - "メモリ上でのみデータ処理"
+    - "セッション終了時の完全クリーンアップ"
+    
+  usability:
+    - "直感的で分かりやすいUI"
+    - "レスポンシブデザイン対応"
+    - "ローディング状態の可視化"
+    - "エラーハンドリングとユーザーフィードバック"
+    
+  compatibility:
+    - "モダンブラウザ対応（Chrome, Firefox, Safari, Edge）"
+
+# 技術要件
+technical_requirements:
+  frontend:
+    framework: "Next.js"
+    language: "TypeScript"
+    styling: "Tailwind CSS"
+    chart_library: "Recharts"
+    auth_library: "NextAuth.js (Google OAuth provider)"
+    
+  backend:
+    runtime: "Node.js"
+    framework: "Next.js API Routes"
+    database: "なし（完全ステートレス・メモリベース処理）"
+    session_storage: "メモリベース（永続化なし）"
+    
+  ai_integration:
+    llm_provider: "OpenAI GPT-4"
+    ocr_service: "Google Cloud Vision API"
+    
+  file_handling:
+    csv_parser: "Papa Parse"
+    image_processing: "Sharp"
+    pdf_generation: "jsPDF"
+    storage: "一時メモリのみ（永続化なし）"
+    
+  deployment:
+    hosting: "Vercel"
+    api: "Vercel Serverless Functions"
+    database_hosting: "不要（完全ステートレス）"
+    cdn: "Vercel Edge Network"
+
+# データ仕様
+data_specifications:
+  input_formats:
+    csv:
+      required_fields:
+        - "日付"
+        - "取引内容/摘要"
+        - "金額"
+      optional_fields:
+        - "残高"
+        - "取引先"
+        - "メモ"
+        
+    image:
+      supported_formats: ["JPEG", "PNG", "PDF"]
+      max_size: "100MB"
+      
+  processing_policy:
+    - "データは分析時のみメモリに保持"
+    - "PDF生成と同時にデータ削除"
+    - "永続化は一切行わない"
+    - "セッション情報もメモリベース（サーバー再起動時消失）"
+
+# ユーザーストーリー
+user_stories:
+  - as: "新規ユーザー"
+    want: "ページにアクセスしてGoogle認証する"
+    so_that: "すぐに分析を開始できる"
+    acceptance_criteria:
+      - "Google OAuthで簡単に認証できる"
+      - "認証後、自動でアップロード画面に遷移する"
+      - "プライバシー保護（データ保存なし）が明示される"
+    
+  - as: "ログイン済みユーザー"
+    want: "情報アップロード画面でCSVファイルまたはスクリーンショットをアップロードする"
+    so_that: "取引履歴を分析してもらえる"
+    acceptance_criteria:
+      - "ドラッグ&ドロップでファイルをアップロードできる"
+      - "ファイル形式と容量の事前チェック機能"
+      - "アップロード進捗が可視化される"
+    
+  - as: "データアップロード完了ユーザー"
+    want: "分析中のローディング画面で進捗を確認する"
+    so_that: "処理状況を把握し安心して待てる"
+    acceptance_criteria:
+      - "分析中であることが明確に表示される"
+      - "推定待機時間が表示される"
+      - "処理の各段階（OCR、分析、グラフ生成）が分かる"
+    
+  - as: "分析成功ユーザー"
+    want: "分析結果をグラフで確認し、PDFでダウンロードする"
+    so_that: "支出パターンを理解し、レポートを取得できる"
+    acceptance_criteria:
+      - "支出パターンがRechartsの円グラフで表示される"
+      - "月別推移がRechartsの線グラフで表示される"
+      - "ワンクリックでPDFレポートをダウンロードできる"
+      - "PDFダウンロード後、全データが削除される"
+    
+  - as: "分析失敗時のユーザー"
+    want: "エラー内容を確認し、再度試行する"
+    so_that: "問題を解決して正常に分析を完了できる"
+    acceptance_criteria:
+      - "具体的なエラーメッセージが表示される"
+      - "「再度お試しください」ボタンで再試行できる"
+      - "ファイル形式やデータ形式の問題が特定できる"
+
+# UI/UX フロー
+user_flow:
+  step1:
+    page: "ランディング/ログイン画面"
+    description: "初回アクセス時の認証画面"
+    elements:
+      - "Google OAuthログインボタン"
+      - "プライバシー保護の説明（データ保存なし）"
+      
+  step2:
+    page: "ファイルアップロード画面"
+    description: "認証後のメイン機能画面"
+    elements:
+      - "ドラッグ&ドロップエリア"
+      - "ファイル選択ボタン"
+      - "サポートされる形式の説明"
+      - "アップロード開始ボタン"
+      - "プライバシー注意事項"
+      
+  step3:
+    page: "分析ローディング画面"
+    description: "AI分析処理中の待機画面"
+    elements:
+      - "プログレスバー"
+      - "現在の処理段階表示"
+      - "推定残り時間"
+      - "キャンセルボタン"
+      
+  step4a:
+    page: "分析結果表示画面（成功）"
+    description: "分析完了後の結果表示"
+    elements:
+      - "支出パターン円グラフ（Recharts）"
+      - "月別支出推移グラフ（Recharts）"
+      - "支出サマリー統計"
+      - "PDFダウンロードボタン"
+      - "新しい分析開始ボタン"
+      - "データ削除確認メッセージ"
+      
+  step4b:
+    page: "エラー画面（失敗）"
+    description: "分析失敗時のエラー表示"
+    elements:
+      - "エラーメッセージ"
+      - "考えられる原因と対処法"
+      - "再試行ボタン"
+      - "サポート連絡先"
+
+# 制約事項
+constraints:
+  - "データは一切保存しない（完全ステートレス・メモリベース）"
+  - "分析後即座にデータ削除"
+  - "セッション情報もメモリベース（永続化なし）"
+  - "1回の分析で処理できるデータ期間は最大1年分"
+  - "セッション終了時またはサーバー再起動時の完全クリーンアップ"
+
+# 今後の拡張案
+future_enhancements:
+  - "より高度な支出パターン分析"
+  - "リアルタイム分析進捗表示"
+  - "分析精度の向上"
+  - "追加のグラフ種類（Rechartsベース）"
