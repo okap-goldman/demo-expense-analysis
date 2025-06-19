@@ -4,22 +4,25 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "pkill -f \"npm run start:local\"; rm nohup.out; nohup npm run start:local > nohup.out 2>&1 &",
+    "log": "clear; tail -n 300 nohup.out",
+    "log:errors": "clear; grep -E '\\[error\\]|\\u1F534' nohup.out | tail -n 100",
+    "start:local": "NODE_ENV=local vite",
     "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
     "recharts": "^2.8.0",
-    "tesseract.js": "^5.0.0",
-    "lucide-react": "^0.294.0",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.0.0",
     "tailwind-merge": "^2.0.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "tesseract.js": "^5.0.0",
+    "tsx": "^4.20.3"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",
@@ -33,6 +36,7 @@
     "eslint-plugin-react-refresh": "^0.4.4",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.2.2",
     "vite": "^4.5.0"
   }

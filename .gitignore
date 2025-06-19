@@ -1,0 +1,4 @@
+.env*
+!.env.*.example
+nohup.out
+node_modules
