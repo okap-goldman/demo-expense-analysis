@@ -123,3 +123,7 @@ osascript -e 'display notification "[作業内容]" with title "CC [ブランチ
 
 **重要**: 通知内容は必ず具体的で分かりやすく記述すること
 
+## 開発用ファイル
+- 取引履歴csvサンプル dev_files/2025_516-615/20250516-20250615_debitmeisai.csv
+- 取引履歴PDFサンプル dev_files/2025_516-615/20250516-20250615_debitmeisai.pdf
+- 取引履歴画像サンプル dev_files/2025_516-615/image.png
